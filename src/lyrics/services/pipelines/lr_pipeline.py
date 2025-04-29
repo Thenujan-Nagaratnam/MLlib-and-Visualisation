@@ -12,6 +12,10 @@ from pyspark.ml.tuning import (
     # TrainValidationSplit,
     # TrainValidationSplitModel,
 )
+
+# Ensure the src directory is in the PYTHONPATH by setting it in the environment or using a proper package structure.
+
+
 from src.lyrics.column import Column
 from src.lyrics.services.pipelines.lyrics_pipeline import LyricsPipeline
 from src.lyrics.services.transformers.cleanser import Cleanser
@@ -102,7 +106,9 @@ class LogisticRegressionPipeline(LyricsPipeline):
         # tv_split_model: TrainValidationSplitModel = tv_split.fit(dataframe)
 
         if print_statistics:
-            print(f"MODEL STATISTICS: {self.get_model_statistics(cross_validator_model)}")
+            print(
+                f"MODEL STATISTICS: {self.get_model_statistics(cross_validator_model)}"
+            )
 
         return cross_validator_model
 
@@ -113,7 +119,9 @@ class LogisticRegressionPipeline(LyricsPipeline):
         best_model: PipelineModel = cast(PipelineModel, model.bestModel)
         stages: List[Transformer] = best_model.stages
 
-        model_statistics["RegParam"] = cast(LogisticRegression, stages[-1]).getRegParam()
+        model_statistics["RegParam"] = cast(
+            LogisticRegression, stages[-1]
+        ).getRegParam()
         model_statistics["MaxIter"] = cast(LogisticRegression, stages[-1]).getMaxIter()
         model_statistics["VectorSize"] = cast(Word2Vec, stages[-2]).getVectorSize()
 

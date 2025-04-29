@@ -3,12 +3,17 @@ import numpy as np
 import pandas as pd
 import time
 import plotly.express as px
-from transformers import pipeline
 import os
 import webbrowser
 
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from pyspark.ml.tuning import CrossValidatorModel
 from src.lyrics.services.pipelines.lr_pipeline import LogisticRegressionPipeline
+import sys
+
 
 DATASET_PATH = os.path.abspath("data/merged-dataset.csv")
 

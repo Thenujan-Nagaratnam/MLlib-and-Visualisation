@@ -3,4 +3,5 @@ numpy
 pandas
 plotly
 pyspark
-
+setuptools
+nltk

@@ -7,6 +7,13 @@ from pyspark.sql.functions import lit
 from pyspark.ml import PipelineModel
 from pyspark.ml.tuning import CrossValidatorModel
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+
+
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.lyrics.column import Column
 from src.lyrics.genre import label_to_genre_map
 
@@ -14,14 +21,15 @@ from src.lyrics.genre import label_to_genre_map
 class LyricsPipeline:
     def __init__(self) -> None:
         print("STARTING SPARK SESSION")
-        self.spark = SparkSession.builder\
-            .appName("LyricsClassifierPipeline")\
-            .config("spark.driver.memory", "3G")\
-            .config("spark.executor.memory", "3G")\
-            .config("spark.executor.cores", "3")\
-            .config("spark.python.worker.memory", "3G") \
-            .config("spark.driver.port", "4040")\
+        self.spark = (
+            SparkSession.builder.appName("LyricsClassifierPipeline")
+            .config("spark.driver.memory", "3G")
+            .config("spark.executor.memory", "3G")
+            .config("spark.executor.cores", "3")
+            .config("spark.python.worker.memory", "3G")
+            .config("spark.driver.port", "4040")
             .getOrCreate()
+        )
 
         self.spark.sparkContext.setLogLevel("ERROR")
 
@@ -55,7 +63,9 @@ class LyricsPipeline:
         return model
 
     @abstractmethod
-    def train(self, dataframe: DataFrame, print_statistics: bool) -> CrossValidatorModel:
+    def train(
+        self, dataframe: DataFrame, print_statistics: bool
+    ) -> CrossValidatorModel:
         pass
 
     def test(
@@ -88,8 +98,12 @@ class LyricsPipeline:
         model: Optional[CrossValidatorModel] = None,
         saved_model_dir_path: Optional[str] = None,
     ):
-        unknown_lyrics_df = self.spark.createDataFrame([(unknown_lyrics,)], [Column.VALUE.value])
-        unknown_lyrics_df = unknown_lyrics_df.withColumn(Column.GENRE.value, lit("UNKNOWN"))
+        unknown_lyrics_df = self.spark.createDataFrame(
+            [(unknown_lyrics,)], [Column.VALUE.value]
+        )
+        unknown_lyrics_df = unknown_lyrics_df.withColumn(
+            Column.GENRE.value, lit("UNKNOWN")
+        )
 
         if not model:
             model = CrossValidatorModel.load(saved_model_dir_path)
