@@ -1,4 +1,4 @@
 from . import (  # noqa F401
-    app,
+    lyric_classifier,
     lyrics,
 )
