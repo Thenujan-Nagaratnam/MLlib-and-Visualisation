@@ -9,8 +9,11 @@ from src.lyrics.services.transformers.lyrics_transformer import LyricsTransforme
 class LabelEncoder(LyricsTransformer):
     def _transform(self, dataframe: DataFrame) -> DataFrame:
         genre_to_label_udf = udf(
-            lambda genre: genre_to_label_map.get(genre, genre_to_label_map["unknown"]), IntegerType()
+            lambda genre: genre_to_label_map.get(genre, genre_to_label_map["unknown"]),
+            IntegerType(),
         )
-        dataframe = dataframe.withColumn(Column.LABEL.value, genre_to_label_udf(col(Column.GENRE.value)))
+        dataframe = dataframe.withColumn(
+            Column.LABEL.value, genre_to_label_udf(col(Column.GENRE.value))
+        )
         dataframe = dataframe.drop(Column.GENRE.value)
         return dataframe

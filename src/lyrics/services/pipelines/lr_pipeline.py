@@ -12,9 +12,7 @@ from pyspark.ml.tuning import (
     # TrainValidationSplit,
     # TrainValidationSplitModel,
 )
-
-# Ensure the src directory is in the PYTHONPATH by setting it in the environment or using a proper package structure.
-
+from pyspark.sql import SparkSession
 
 from src.lyrics.column import Column
 from src.lyrics.services.pipelines.lyrics_pipeline import LyricsPipeline
@@ -30,6 +28,8 @@ class LogisticRegressionPipeline(LyricsPipeline):
         print_statistics: bool = False,
     ) -> CrossValidatorModel:
         dataframe: DataFrame = dataframe.select(Column.VALUE.value, Column.GENRE.value)
+
+        # dataframe.printSchema()
 
         label_encoder = LabelEncoder()
 

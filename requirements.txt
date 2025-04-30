@@ -3,5 +3,7 @@ numpy
 pandas
 plotly
 pyspark
+pyspark[sql]
 setuptools
 nltk
+h2o_wave

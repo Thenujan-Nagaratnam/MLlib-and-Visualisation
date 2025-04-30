@@ -23,11 +23,10 @@ class LyricsPipeline:
         print("STARTING SPARK SESSION")
         self.spark = (
             SparkSession.builder.appName("LyricsClassifierPipeline")
-            .config("spark.driver.memory", "3G")
-            .config("spark.executor.memory", "3G")
-            .config("spark.executor.cores", "3")
-            .config("spark.python.worker.memory", "3G")
-            .config("spark.driver.port", "4040")
+            .config("spark.driver.memory", "8g")
+            .config("spark.executor.memory", "8g")
+            .config("spark.network.timeout", "600s")
+            .config("spark.executor.heartbeatInterval", "60s")
             .getOrCreate()
         )
 
@@ -49,6 +48,12 @@ class LyricsPipeline:
     ) -> CrossValidatorModel:
         data = self.read_csv(dataset_path)
         train_df, test_df = data.randomSplit([train_ratio, (1 - train_ratio)], seed=42)
+
+        # print("DATAFRAME INFO:")
+        # print(f"Number of rows: {data.count()}")
+        # print(f"Number of columns: {len(data.columns)}")
+        # print("Columns and their data types:")
+        # data.printSchema()
 
         model: CrossValidatorModel = self.train(train_df, print_statistics)
         test_accuracy: float = self.test(test_df, model)

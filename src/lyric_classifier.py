@@ -18,14 +18,13 @@ DATASET_PATH = os.path.abspath("data/merged-dataset.csv")
 
 MODEL_DIR_PATH = os.path.abspath("model/")
 
-pipeline: LogisticRegressionPipeline
-model: CrossValidatorModel
+pipeline: LogisticRegressionPipeline = None
+model: CrossValidatorModel = None
+classifier = None
 
 
+@st.cache_resource
 def load_model():
-    global pipeline
-    global model
-
     if not (
         os.path.exists(MODEL_DIR_PATH)
         and os.path.isdir(MODEL_DIR_PATH)
@@ -35,8 +34,6 @@ def load_model():
 
         pipeline = LogisticRegressionPipeline()
 
-        print("PLEASE WAIT UNTIL YOU SEE => INFO: Application startup complete.")
-
         model = pipeline.train_and_test(
             dataset_path=DATASET_PATH,
             train_ratio=0.8,
@@ -45,14 +42,15 @@ def load_model():
         )
     else:
         pipeline = LogisticRegressionPipeline()
-
-        print("PLEASE WAIT UNTIL YOU SEE => INFO: Application startup complete.")
-
         model = CrossValidatorModel.load(MODEL_DIR_PATH)
 
-    webbrowser.open("http://localhost:8501/")
+    global classifier
+    classifier = model
+    return pipeline, model
 
-    return model
+
+def on_shutdown():
+    pipeline.stop()
 
 
 # Set page configuration
@@ -116,21 +114,6 @@ st.markdown(
 )
 
 
-# # Initialize the transformer model
-# @st.cache_resource
-# def load_model():
-#     try:
-#         classifier = pipeline(
-#             "text-classification",
-#             model="valhalla/distilbart-mnli-12-3",
-#             return_all_scores=True,
-#         )
-#         return classifier
-#     except Exception as e:
-#         st.error(f"Error loading model: {e}")
-#         return None
-
-
 # Define the genre labels
 GENRES = [
     "Pop",
@@ -157,10 +140,20 @@ def classify_lyrics(lyrics, classifier):
     with st.spinner("Analyzing lyrics..."):
         time.sleep(0.5)  # Simulate processing time
 
-        # Generate predictions for each genre hypothesis
-        results = []
+        # # Generate predictions for each genre hypothesis
+        # prediction = pipeline.predict_one(
+        #     unknown_lyrics=lyrics,
+        #     threshold=0.35,
+        #     model=classifier,
+        # )
         for hypothesis in genre_hypotheses:
-            prediction = classifier(lyrics, hypothesis)
+            threshold = 0.35
+            prediction, probabilities = pipeline.predict_one(
+                unknown_lyrics=lyrics,
+                threshold=threshold,
+                model=classifier,
+            )
+            # prediction = classifier(lyrics, hypothesis)
             score = prediction[0][1]["score"]  # Get the entailment score
             results.append(score)
 
@@ -180,11 +173,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+print("Loading classifier")
 # Load the model
-classifier = load_model()
+pipeline, model = load_model()
 
+# Run this only once, not inside load_model()
+webbrowser.open("http://localhost:8501/")
+
+
+print("Classifier loaded successfully.")
 # Main content
 col1, col2 = st.columns([3, 2])
+
+print("PLEASE WAIT UNTIL YOU SEE => INFO: Application startup complete.")
 
 with col1:
     # Text area for lyrics input
@@ -276,3 +277,10 @@ with st.sidebar:
     st.subheader("Supported Genres")
     for genre in GENRES:
         st.write(f"- {genre}")
+
+
+if pipeline:
+    try:
+        on_shutdown()
+    except Exception as e:
+        print(f"Error during shutdown: {e}")

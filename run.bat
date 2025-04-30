@@ -12,6 +12,11 @@ IF NOT EXIST "venv" (
     python -m venv venv
 )
 
+:: Set environment variables for PySpark
+set PYSPARK_PYTHON=venv\Scripts\python.exe
+set PYSPARK_DRIVER_PYTHON=venv\Scripts\python.exe
+
+
 echo Activating virtual environment...
 call venv\Scripts\activate.bat
 
@@ -19,6 +24,7 @@ echo Installing required packages...
 pip install -r requirements.txt
 
 echo Starting Lyric Genre Classifier...
-streamlit run src/lyric_classifier.py
+@REM streamlit run src/lyric_classifier.py
+wave run src.app
 
 pause
