@@ -1,10 +1,19 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import os
-import joblib
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-import pickle
 import logging
+import webbrowser
+
+from pyspark.ml.tuning import CrossValidatorModel
+from pyspark import SparkContext
+
+from lyrics_classifier import LogisticRegressionPipeline
+import joblib
+
+os.environ["PYSPARK_PYTHON"] = os.path.join(os.environ["CONDA_PREFIX"], "python.exe")
+os.environ["PYSPARK_DRIVER_PYTHON"] = os.path.join(
+    os.environ["CONDA_PREFIX"], "python.exe"
+)
+os.environ["HADOOP_HOME"] = "C:\\hadoop"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,16 +21,47 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Model and vectorizer paths
-MODEL_PATH = "model/genre_classifier.pkl"
-VECTORIZER_PATH = "model/tfidf_vectorizer.pkl"
+pipeline: LogisticRegressionPipeline
+model: CrossValidatorModel
 
-# Create model directory if it doesn't exist
-os.makedirs("model", exist_ok=True)
+DATASET_PATH = os.path.abspath("data/mendeley-music-dataset.csv")
+MODEL_DIR_PATH = os.path.abspath("model")
 
-# Initialize model and vectorizer as None
-model = None
-vectorizer = None
+
+def load_model():
+    global pipeline
+    global model
+
+    if not (
+        os.path.exists(MODEL_DIR_PATH)
+        and os.path.isdir(MODEL_DIR_PATH)
+        and len(os.listdir(MODEL_DIR_PATH)) > 0
+    ):
+        os.makedirs(MODEL_DIR_PATH, exist_ok=True)
+
+        pipeline = LogisticRegressionPipeline()
+
+        print("Training the model...")
+
+        model = pipeline.train_and_test(
+            dataset_path=DATASET_PATH,
+            train_ratio=0.8,
+            store_model_on=MODEL_DIR_PATH,
+            print_statistics=True,
+        )
+
+        model.save(MODEL_DIR_PATH)
+        print("Model trained and saved successfully.")
+
+    else:
+        pipeline = LogisticRegressionPipeline()
+
+        print("Loading the pre trained model...")
+
+        model = CrossValidatorModel.load(MODEL_DIR_PATH)
+
+    return True
+
 
 # Dictionary mapping of genres (should match your model's classes)
 # Update this based on your actual model's classes
@@ -39,79 +79,22 @@ GENRES = [
 ]
 
 
-def load_model():
-    """Load the pre-trained model and vectorizer"""
-    global model, vectorizer
+# Function to classify lyrics
+def predict_genre(lyrics):
+    if not lyrics.strip():
+        return None
 
-    try:
-        logger.info("Loading model and vectorizer...")
-
-        # Check if model exists, if not create dummy model for demonstration
-        if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
-            logger.warning(
-                "Model or vectorizer not found. Creating dummy model for demonstration."
-            )
-            create_dummy_model()
-
-        model = joblib.load(MODEL_PATH)
-        vectorizer = joblib.load(VECTORIZER_PATH)
-
-        logger.info("Model and vectorizer loaded successfully.")
-        return True
-    except Exception as e:
-        logger.error(f"Error loading model: {str(e)}")
-        return False
-
-
-def create_dummy_model():
-    """Create a simple dummy model and vectorizer for demonstration"""
-    from sklearn.ensemble import RandomForestClassifier
-
-    # Create a simple dummy vectorizer
-    dummy_vectorizer = TfidfVectorizer(max_features=1000)
-    # Fit on some example text
-    dummy_vectorizer.fit(
-        [
-            "this is an example lyric for pop music",
-            "rock music has guitars and drums",
-            "rap music has rhymes and beats",
-            "country music tells stories about life",
-        ]
+    threshold = 0.35
+    prediction, probabilities = pipeline.predict_one(
+        unknown_lyrics=lyrics,
+        threshold=threshold,
+        model=model,
     )
 
-    # Create a simple dummy model
-    dummy_model = RandomForestClassifier(n_estimators=10)
-    # Fit with dummy data
-    dummy_X = dummy_vectorizer.transform(["example"] * 10)
-    dummy_y = np.random.choice(GENRES, size=10)
-    dummy_model.fit(dummy_X, dummy_y)
+    print(f"Prediction: {prediction}")
+    print(f"Probabilities: {probabilities}")
 
-    # Save the dummy model and vectorizer
-    joblib.dump(dummy_model, MODEL_PATH)
-    joblib.dump(dummy_vectorizer, VECTORIZER_PATH)
-
-    logger.info("Dummy model created and saved.")
-
-
-def predict_genre(lyrics):
-    """Predict genre from lyrics using the loaded model"""
-    try:
-        # Preprocess lyrics (get TF-IDF features)
-        X = vectorizer.transform([lyrics])
-
-        # Get prediction probabilities
-        probabilities = model.predict_proba(X)[0]
-
-        # Create dictionary of genre:probability
-        genre_probs = {GENRES[i]: float(prob) for i, prob in enumerate(probabilities)}
-
-        # Get the predicted genre (highest probability)
-        predicted_genre = GENRES[np.argmax(probabilities)]
-
-        return {"predicted_genre": predicted_genre, "probabilities": genre_probs}
-    except Exception as e:
-        logger.error(f"Prediction error: {str(e)}")
-        return {"error": str(e)}
+    return {"predicted_genre": prediction, "probabilities": probabilities}
 
 
 @app.route("/")
@@ -161,7 +144,9 @@ if __name__ == "__main__":
                 with open("templates/index.html", "w") as f_dst:
                     f_dst.write(f_src.read())
 
+        webbrowser.open("http://10.10.43.93:5000/")
         # Run the Flask app
         app.run(debug=True, host="0.0.0.0", port=5000)
+
     else:
         logger.error("Failed to load model. Exiting...")

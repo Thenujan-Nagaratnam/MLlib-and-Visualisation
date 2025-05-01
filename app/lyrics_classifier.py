@@ -128,8 +128,8 @@ class LyricsPipeline:
         print("STARTING SPARK SESSION")
         self.spark = (
             SparkSession.builder.appName("LyricsClassifierPipeline")
-            .config("spark.driver.memory", "8g")
-            .config("spark.executor.memory", "8g")
+            .config("spark.driver.memory", "4g")
+            .config("spark.executor.memory", "4g")
             .config("spark.network.timeout", "600s")
             .config("spark.executor.heartbeatInterval", "60s")
             .getOrCreate()
@@ -167,8 +167,8 @@ class LyricsPipeline:
             print(f"CROSS VALIDATOR MODEL AVERAGE METRICS: {model.avgMetrics}")
             print(f"TEST ACCURACY: {test_accuracy}")
 
-        if store_model_on:
-            model.write().overwrite().save(store_model_on)
+        # if store_model_on:
+        #     model.write().overwrite().save(store_model_on)
 
         return model
 
