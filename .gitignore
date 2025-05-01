@@ -1,4 +1,5 @@
 /venv
 .env
-/model
+model/
+app/model/
 __pycache__/

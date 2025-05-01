@@ -23,7 +23,6 @@ model: CrossValidatorModel = None
 classifier = None
 
 
-@st.cache_resource
 def load_model():
     if not (
         os.path.exists(MODEL_DIR_PATH)
