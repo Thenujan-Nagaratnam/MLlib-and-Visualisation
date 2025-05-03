@@ -1,5 +1,1 @@
-/venv
 .env
-model/
-app/model/
-__pycache__/

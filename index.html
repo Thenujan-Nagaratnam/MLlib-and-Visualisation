@@ -1,79 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lyric Vision Spectrum Show</title>
-    <meta name="description" content="Lyric Genre Classification Application" />
-    <meta name="author" content="Lovable" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: linear-gradient(135deg, #6C5CE7, #a29bfe);
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        text-align: center;
-      }
-      .container {
-        padding: 2rem;
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        max-width: 600px;
-      }
-      h1 {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-      }
-      p {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        line-height: 1.6;
-      }
-      .btn {
-        display: inline-block;
-        padding: 0.8rem 2rem;
-        background-color: white;
-        color: #6C5CE7;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: bold;
-        font-size: 1.1rem;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-      }
-      .manual {
-        margin-top: 2rem;
-        font-size: 0.9rem;
-        opacity: 0.8;
-      }
-      code {
-        background-color: rgba(0, 0, 0, 0.2);
-        padding: 0.2rem 0.4rem;
-        border-radius: 3px;
-      }
-    </style>
-  </head>
-  <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyric Genre Whisperer</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
     <div class="container">
-      <h1>Lyric Vision Spectrum Show</h1>
-      <p>Discover the genre of your favorite lyrics through AI visualization.</p>
-      <a href="run_lyric_classifier.bat" class="btn">Launch Application</a>
-      <div class="manual">
-        <p>Or run manually with:</p>
-        <code>streamlit run src/lyric_classifier.py</code>
-      </div>
+        <header>
+            <h1>Lyric Genre Whisperer</h1>
+            <p class="subtitle">Discover the genre of your favorite songs through lyrics</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <form id="lyrics-form" action="/predict" method="POST">
+                    <div class="form-group">
+                        <label for="lyrics">Enter Song Lyrics:</label>
+                        <textarea id="lyrics" name="lyrics" rows="10" placeholder="Paste your lyrics here..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Analyze Lyrics</button>
+                </form>
+            </section>
+
+            <section class="results-section" id="results-section" style="display: none;">
+                <div class="top-genre">
+                    <h2>Predicted Genre: <span id="predicted-genre">Pop</span></h2>
+                    <p class="confidence">Confidence: <span id="confidence">85%</span></p>
+                </div>
+                <div class="visualization">
+                    <h3>Genre Probability Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="genre-chart"></canvas>
+                    </div>
+                </div>
+                <button id="new-analysis" class="secondary-btn">Analyze New Lyrics</button>
+            </section>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing lyrics...</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Lyric Genre Whisperer &copy; 2025</p>
+        </footer>
     </div>
-  </body>
+
+    <script src="static/script.js"></script>
+</body>
 </html>
